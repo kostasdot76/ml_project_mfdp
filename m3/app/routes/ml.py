@@ -6,25 +6,31 @@ from database.database import get_session
 from models.mltask import MLTask, TaskStatus, MLTaskCreate
 from services.rm.rm import rabbit_client
 from services.rm.rpc import rpc_client
-from services.logging.logging import get_logger
+from m3.app.core.logging import get_logger
 from services.crud.mltask import MLTaskService
 
-logging.getLogger('pika').setLevel(logging.INFO)
+logging.getLogger("pika").setLevel(logging.INFO)
 
 logger = get_logger(logger_name=__name__)
 
 ml_route = APIRouter()
 
+
 def get_mltask_service(session: Session = Depends(get_session)) -> MLTaskService:
     return MLTaskService(session)
 
+
 @ml_route.post(
-    "/send_task", 
+    "/send_task",
     response_model=Dict[str, str],
     summary="ML endpoint",
-    description="Send ml request"
+    description="Send ml request",
 )
-async def send_task(message: str, user_id: int, mltask_service: MLTaskService = Depends(get_mltask_service)) -> str:
+async def send_task(
+    message: str,
+    user_id: int,
+    mltask_service: MLTaskService = Depends(get_mltask_service),
+) -> str:
     """
     Root endpoint returning welcome message.
 
@@ -47,11 +53,12 @@ async def send_task(message: str, user_id: int, mltask_service: MLTaskService = 
         logger.error(f"Unexpected error in sending task: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @ml_route.post("/send_task_result", response_model=Dict[str, str])
 def send_task_result(
     task_id: int,
     result: str,
-    mltask_service: MLTaskService = Depends(get_mltask_service)
+    mltask_service: MLTaskService = Depends(get_mltask_service),
 ) -> Dict[str, str]:
     """
     Endpoint for sending ML task using Result.
@@ -70,14 +77,13 @@ def send_task_result(
     except Exception as e:
         logger.error(f"Unexpected error in sending task result: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    
 
 
 @ml_route.post("/send_task_rpc", response_model=Dict[str, str])
 async def send_task_rpc(
     message: str,
     user_id: int,
-    mltask_service: MLTaskService = Depends(get_mltask_service)
+    mltask_service: MLTaskService = Depends(get_mltask_service),
 ) -> Dict[str, str]:
     """
     Endpoint for sending ML task using RPC.
@@ -89,15 +95,13 @@ async def send_task_rpc(
     Returns:
         Dict[str, str]: Response message with original and processed text.
     """
-    
+
     try:
         # Create task using service
         task_create = MLTaskCreate(
-            question=message,
-            user_id=user_id,
-            status=TaskStatus.NEW
+            question=message, user_id=user_id, status=TaskStatus.NEW
         )
-        ml_task = mltask_service.create(task_create) 
+        ml_task = mltask_service.create(task_create)
 
         logger.info(f"Sending RPC request with message: {message}")
         result = rpc_client.call(text=message)
@@ -105,7 +109,7 @@ async def send_task_rpc(
 
         # Update task with result using service
         mltask_service.set_result(ml_task.id, result)
-        
+
         return {"original": message, "processed": result}
     except Exception as e:
         logger.error(f"Unexpected error in RPC call: {str(e)}")
@@ -113,17 +117,16 @@ async def send_task_rpc(
             mltask_service.set_status(ml_task.id, TaskStatus.FAILED)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 @ml_route.get("/tasks", response_model=List[MLTask])
-async def get_all_tasks(
-    mltask_service: MLTaskService = Depends(get_mltask_service)
-):
+async def get_all_tasks(mltask_service: MLTaskService = Depends(get_mltask_service)):
     """Get all ML tasks."""
     return mltask_service.get_all()
 
+
 @ml_route.get("/tasks/{task_id}", response_model=MLTask)
 async def get_task(
-    task_id: int,
-    mltask_service: MLTaskService = Depends(get_mltask_service)
+    task_id: int, mltask_service: MLTaskService = Depends(get_mltask_service)
 ):
     """Get ML task by ID."""
     task = mltask_service.get(task_id)
