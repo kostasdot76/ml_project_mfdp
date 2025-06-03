@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from app.services.UnitOfWork import UnitOfWork
 from app.schemas.transaction import TransactionRead
+from app.models.transaction import TransactionStatus, TransactionType
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,8 @@ class DepositTransactionService(TransactionService):
         return self.amount > 0
 
     def _apply_changes(self):
-        self.transaction = self.uow.transactions.create(
-            user_id=self.user_id, amount=self.amount
+        self.transaction = self.uow.transactions.create_transaction(
+            user_id=self.user_id, amount=self.amount, type=TransactionType.deposit
         )
         self.uow.users.increase_balance(user_id=self.user_id, amount=self.amount)
 
@@ -59,7 +60,7 @@ class DebtTransactionService(TransactionService):
         return balance >= self.amount > 0
 
     def _apply_changes(self):
-        self.transaction = self.uow.transactions.create(
-            user_id=self.user_id, amount=-self.amount
+        self.transaction = self.uow.transactions.create_transaction(
+            user_id=self.user_id, amount=-self.amount, type=TransactionType.DEBT
         )
         self.uow.users.decrease_balance(user_id=self.user_id, amount=self.amount)

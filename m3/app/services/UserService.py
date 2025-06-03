@@ -1,7 +1,9 @@
 from app.schemas.user import UserCreate, UserRead
-from app.services.crud.UserRepository import UserRepository
+
+# from app.services.crud.UserRepository import UserRepository
 from app.services.UnitOfWork import UnitOfWork
-from sqlmodel import SQLModel
+
+# from sqlmodel import SQLModel
 
 
 class UserService:

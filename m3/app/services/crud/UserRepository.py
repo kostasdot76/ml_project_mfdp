@@ -1,100 +1,69 @@
-from models import User
-from models.enums import UserRole
-from typing import List, Optional
+from typing import Optional
 from decimal import Decimal
-from sqlmodel import Session, select
-from typing import Optional, List
 from fastapi import HTTPException, status
-from auth.hash_password import HashPassword
-from core.logging import get_logger
+from sqlmodel import Session, select
+from app.models.user import User, UserRole
+from app.schemas.user import UserCreate
+from app.auth.hash_password import HashPassword
 
-logging = get_logger(logger_name=__name__)
-
-hash_password = HashPassword()
+# from app.services.security import HashPassword
 
 
 class UserRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    # Create
-    def create_user(self, email: str, password: str) -> User:
-        if self.get_user_by_email(email):
-            raise ValueError("Пользователь с таким емейл уже существует")
-
-        user = User(email=email, password=password)
-        self.session.add(user)
-        return user
-
-    def create_admin(self, email: str, password: str) -> User:
-        if self.get_user_by_email(email):
-            raise ValueError("Пользователь с таким емейл уже существует")
-
-        user = User(email=email, password=password, role=UserRole.ADMIN)
-        self.session.add(user)
-        return user
-
     def get_user_by_id(self, user_id: int) -> Optional[User]:
         return self.session.get(User, user_id)
 
-    def get_user_by_id(self, user_id: int) -> Optional[User]:
-        users = self.session.get(User, user_id)
-        if users:
-            return users
-        return None
-
-    def get_user_balance(self, user_id: int) -> Decimal:
-        user = self.session.get(User, user_id)
-        if user:
-            return user.balance
-        return None
-
     def get_user_by_email(self, email: str) -> Optional[User]:
-        statement = select(User).where(User.email == email)
-        user = self.session.exec(statement).first()
-        if user:
-            return user
-        return None
+        return self.session.exec(select(User).where(User.email == email)).first()
 
-    def get_all_users(self) -> List[User]:
-        statement = select(User)
-        return self.session.exec(statement).all()
+    def create_user(self, user: UserCreate, role: str = UserRole.USER) -> User:
+        hashed_password = HashPassword.create_hash(user.password)
+        db_user = User(
+            email=user.email,
+            hashed_password=hashed_password,
+            role=role,
+            balance=Decimal("0.00"),
+        )
+        self.session.add(db_user)
+        self.session.flush()
+        return db_user
 
-    def update_user(self, user: User, **fields) -> User:
-        # Обновляем поля
-        for field, value in fields.items():
-            if hasattr(user, field):
-                setattr(user, field, value)
+    def get_all_users(self) -> list[User]:
+        return self.session.exec(select(User)).all()
 
-        # Перепривязываем к сессии, если нужно
-        if user not in self.session:
-            self.session.add(user)
+    def update_user(self, user_id: int, new_data: dict):
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        for key, value in new_data.items():
+            setattr(user, key, value)
+        self.session.add(user)
 
-        return user
-
-    def register_user(self, email: str, password: str):
-        user_exist = self.get_user_by_email(email)
-        if user_exist:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User with email provided exists already.",
-            )
-
-        hashed_password = hash_password.create_hash(password)
-        self.create_user(email, hashed_password)
-
-    def register_admin(self):
-        email = "admin@example.com"
-        password = "admin123"
-        user_exist = self.get_user_by_email(email)
-        if user_exist:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Admin already exists."
-            )
-
-        hashed_password = hash_password.create_hash(password)
-        self.create_admin(email, hashed_password)
-
-    # Delete
-    def delete_user(self, user: User) -> None:
+    def delete_user(self, user_id: int):
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         self.session.delete(user)
+
+    def increase_balance(self, user_id: int, amount: float):
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.balance += Decimal(str(amount))
+        self.session.add(user)
+
+    def decrease_balance(self, user_id: int, amount: float):
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.balance -= Decimal(str(amount))
+        self.session.add(user)
+
+    def get_balance(self, user_id: int) -> Decimal:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user.balance
