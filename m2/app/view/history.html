@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction History{% endblock %}
+
+{% block content %}
+<h1>История прогнозов 📜</h1>
+
+{% if predictions %}
+<ul>
+    {% for prediction in predictions %}
+    <li>
+        <a href="/predict/status/{{ prediction.id }}">Task #{{ prediction.id }}</a>
+        - {{ prediction.model_type }}
+        - {{ prediction.result }}
+        - {{ prediction.cost }}
+        - {{ prediction.status }}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No predictions found</p>
+{% endif %}
+
+<hr>
+
+{% endblock %}

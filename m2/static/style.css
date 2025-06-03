@@ -1,0 +1,153 @@
+/* Общие стили для всей страницы */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+    text-align: center;
+    /* Центрируем весь текст */
+}
+
+/* Основной контентный блок */
+#content {
+    max-width: 800px;
+    margin: 0 auto;
+    /* Центрирование по горизонтали */
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    /* Возвращаем выравнивание текста внутри */
+}
+
+/* Заголовки */
+h1,
+h2 {
+    color: #336699;
+    text-align: center;
+    /* Центрируем заголовки */
+    margin: 20px 0;
+}
+
+/* Навигация в футере */
+#footer {
+    margin-top: 40px;
+    text-align: center;
+    /* Центрируем навигационные ссылки */
+}
+
+/* Стили для всех форм */
+form {
+    max-width: 500px;
+    margin: 20px auto;
+    /* Центрируем форму */
+    padding: 20px;
+}
+
+/* Группы элементов формы */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+    /* Выравниваем текст слева внутри групп */
+}
+
+/* Поля ввода */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    /* Учитываем padding в ширине */
+}
+
+/* Кнопки */
+input[type="submit"],
+button {
+    background-color: #336699;
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+    /* Для центрирования кнопок */
+    margin: 20px auto;
+    /* Центрируем кнопки */
+}
+
+/* Специфичные стили для контейнера прогнозов */
+.prediction-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+/* Сетка параметров вина */
+.wine-params {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 30px 0;
+}
+
+/* Стили для ползунков */
+.param-group {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.param-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
+/* Сообщения об ошибках/успехе */
+.alert {
+    padding: 15px;
+    margin: 20px auto;
+    border-radius: 4px;
+    max-width: 500px;
+}
+
+.alert-error {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .wine-params {
+        grid-template-columns: 1fr;
+        /* Одна колонка на мобильных */
+    }
+
+    #content {
+        margin: 10px;
+        padding: 10px;
+    }
+}
