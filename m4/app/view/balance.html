@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Balance{% endblock %}
+
+{% block content %}
+<h1>Ваш баланс 💰</h1>
+
+<p>Current balance: {{ balance }}</p>
+
+<h2>Пополнение баланса</h2>
+
+<!-- Вывод ошибок -->
+{% if errors %}
+<div class="alert alert-error">
+    <ul>
+        {% for error in errors %}
+        <p style="color: red">{{ error }}</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form action="/balance/deposit" method="post">
+    <input type="number" name="amount" step="0.01" required>
+    <input type="submit" value="Deposit">
+</form>
+
+{% if error %}
+<p style="color: red">{{ error }}</p>
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<hr>
+{% endblock %}

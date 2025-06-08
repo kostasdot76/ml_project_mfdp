@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Create Prediction{% endblock %}
+
+{% block content %}
+<div class="prediction-container">
+    <h1>Описание изображения</h1>
+
+    <!-- Вывод ошибок -->
+    {% if errors %}
+    <div class="alert alert-error">
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Форма -->
+    <form method="post" action="/predict">
+        <label for="prompt_ru">Описание изображения:</label>
+        <textarea id="prompt_ru" name="prompt_ru" rows="4" cols="50"></textarea>
+
+        <br>
+        <input type="checkbox" id="include_color_instruction" name="include_color_instruction" value="true">
+        <label for="include_color_instruction">Добавить инструкции по цветам</label>
+
+        <br>
+        <input type="checkbox" id="replace_colors_with_hex" name="replace_colors_with_hex" value="true">
+        <label for="replace_colors_with_hex">Заменить цвета на HEX</label>
+
+        <br><br>
+        <button type="submit">Отправить</button>
+    </form>
+
+    <!-- Навигация -->
+    <div class="navigation-links">
+        <a href="/predict/history">View History</a> |
+        <a href="/">Back to Home</a>
+    </div>
+</div>
+
+<script>
+</script>
+
+{% endblock %}

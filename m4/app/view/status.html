@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Task Status{% endblock %}
+
+{% block content %}
+<h1>Task #{{ prediction.id }}</h1>
+
+<p>Status: {{ prediction.status }}</p>
+{% if prediction.result %}
+    <p>Result: {{ prediction.result }}</p>
+{% endif %}
+
+{% include '_site_map.html' %}
+{% endblock %}

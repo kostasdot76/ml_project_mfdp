@@ -1,0 +1,104 @@
+{
+	"colors": {
+		"Primary Burgundy": {
+		  "hex": "#A04476",
+		  "synonyms": ["burgundy", "dark burgundy", "brand burgundy"],
+		  "mml": ["primary color", "primary"]
+		},
+		"Primary Blue": {
+		  "hex": "#1E355C",
+		  "synonyms": ["blue", "dark blue", "brand blue"],
+		  "mml": ["primary color", "primary"]
+		},
+		"Primary Teal": {
+		  "hex": "#3D6791",
+		  "synonyms": ["teal", "dark teal", "brand teal"],
+		  "mml": ["primary color", "primary"]
+		},
+		"Primary Gray": {
+		  "hex": "#948A8A",
+		  "synonyms": ["gray", "dark gray", "brand gray"],
+		  "mml": ["primary color", "primary"]
+		},
+		"Primary Beige": {
+		  "hex": "#CE998D",
+		  "synonyms": ["beige", "dark beige", "brand beige"],
+		  "mml": ["primary color", "primary"]
+		},
+		"Light Burgundy": {
+		  "hex": "#DCB4C6",
+		  "synonyms": ["light burgundy", "pastel burgundy", "rosy", "Pantone 682 C"],
+		  "mml": ["secondary color", "light"]
+		},
+		"Light Blue": {
+		  "hex": "#A3A8BA",
+		  "synonyms": ["light blue", "pastel blue", "sky blue", "Pantone 534 C"],
+		  "mml": ["secondary color", "light"]
+		},
+		"Light Teal": {
+		  "hex": "#B5C0D2",
+		  "synonyms": ["light teal", "pastel teal", "sky teal", "Pantone 2160 C"],
+		  "mml": ["secondary color", "light"]
+		},
+		"Light Gray": {
+		  "hex": "#D5D0D1",
+		  "synonyms": ["light gray", "pastel gray", "ash gray", "Pantone 4290 C"],
+		  "mml": ["secondary color", "light"]
+		},
+		"Light Beige": {
+		  "hex": "#EED7D0",
+		  "synonyms": ["light beige", "pastel beige", "sand", "Pantone 7612 C"],
+		  "mml": ["secondary color", "light"]
+		}
+	},
+    "fonts": [
+        "Mabry Pro Normal",
+        "Mabry Pro Light",
+        "Mabry Pro Medium",
+        "Mabry Pro Bold"
+    ],
+    "style_keywords": [
+        "minimalism",
+        "circles",
+        "bottles",
+        "wooden barrels",
+        "pattern",
+        "wine theme",
+        "alcohol theme",
+        "clean lines",
+        "brand colors",
+        "grape cluster",
+        "cocktail straw"
+    ],
+    "prohibited": [
+        "placing contrasting elements within the logo's safety zone",
+        "positioning the logo too close to layout edges",
+        "using colors outside the brand palette",
+        "distorting logo proportions"
+    ],
+    "logo_rules": {
+        "description": "The logo combines a grape cluster motif with a tail resembling a cocktail straw",
+        "variants": [
+            "horizontal",
+            "vertical"
+        ],
+        "safety_zone": "maintain the logo's safety zone by avoiding contrasting elements within the outer frame",
+        "positioning": "avoid placing the logo near layout edges",
+        "color_usage": "the logo may use any of the approved color combinations"
+    },
+    "pattern": {
+        "description": "The brand pattern is inspired by arrangements of bottles and wooden barrels",
+        "usage": [
+            "Heavy cropping",
+            "Full pattern",
+            "Partial pattern"
+        ],
+        "pattern_elements": "various colored circles in checkerboard arrangement"
+    },	
+    "pages": {
+        "colors": 4,
+        "logo": "5-7",
+        "pattern": "8-9",
+        "fonts": 11
+    }
+}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Пополнение баланса 💰</h1>
+
+{% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+{% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<form action="/admin/balance" method="post">
+    <div class="form-group">
+        <label>Email пользователя</label>
+        <input type="email" name="email" required>
+    </div>
+    
+    <div class="form-group">
+        <label>Сумма пополнения</label>
+        <input type="number" name="amount" step="0.01" min="0.01" required>
+    </div>
+    
+    <button type="submit" class="btn">Пополнить</button>
+</form>
+
+<a href="/admin">Назад в админку</a>
+{% endblock %}

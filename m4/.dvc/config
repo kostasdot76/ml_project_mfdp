@@ -1,0 +1,8 @@
+[core]
+    remote = s3_project_m2
+    autostage = true
+    no_scm = true
+['remote "s3_project_m2"']
+    url = s3://konstantin-vahrameev-fab8797
+    use_ssl = true
+    endpointurl = https://s3.lab.karpov.courses

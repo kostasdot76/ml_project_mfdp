@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt /app/
+COPY requirements.test.txt /app/
+
+RUN pip install --upgrade pip && pip install -r /app/requirements.txt && pip install -r /app/requirements.test.txt
+
+CMD ["pytest", "tests/", "-v","-p no:warnings"]

@@ -1,0 +1,20 @@
+<!-- 
+This code snippet will appear in each file, so to avoid re-writing it we define 
+it only once here. 
+-->
+
+<!-- <a href="/">Home</a> | 
+<a href="/auth/login">Login</a> |
+<a href="/private">Private</a> |
+<a href="/auth/logout">Logout</a> -->
+
+<a href="/">Home</a> |
+<a href="/auth/login">Login</a> |
+<a href="/auth/signup">Sign Up</a> |
+<a href="/balance">Balance</a> |
+<a href="/predict">Predict</a> |
+<a href="/predict/history">History</a> |
+<a href="/auth/logout">Logout</a>
+{% if user and user.role == 'admin' %}
+<a href="/admin">Admin</a> |
+{% endif %}

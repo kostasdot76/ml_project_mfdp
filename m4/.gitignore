@@ -1,0 +1,14 @@
+.env
+.venv/
+app/.env
+app/testing.db
+app/myapp.log
+**/__pycache__
+**/.DS_Store
+**/.pytest_cache
+rabbitmq_data
+rabbitmq_data/.erlang.cookie
+to_delete
+.DS_Store
+/.dvc/config.local
+test/
