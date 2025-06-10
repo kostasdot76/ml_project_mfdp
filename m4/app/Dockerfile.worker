@@ -2,8 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Копируем CLIP из локальной папки
+COPY ./clip /app/clip
+
 COPY requirements.txt /app/
 
 RUN pip install --upgrade pip && pip install -r /app/requirements.txt
+
+RUN pip install /app/clip
 
 CMD ["python", "prediction_worker.py"]

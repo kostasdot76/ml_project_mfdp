@@ -58,7 +58,7 @@ class PredictionService(ABC):
 
     def _get_model(self) -> BaseMLModel:
         if self._model_type == "prompt_enhancer":
-            return build_prompt_enhancer_model()
+            return BaseMLModel("prompt_enhancer")
 
         if self._model_type == "regression":
             return RegressionModel(settings.MODEL_NAME)

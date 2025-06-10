@@ -214,48 +214,60 @@ async def create_prediction_front(
     include_color_instruction: bool = Form(False),
     replace_colors_with_hex: bool = Form(True),
     email: str = Depends(authenticate_cookie),
-    uow: UnitOfWork = Depends(get_uow),
+    # uow: UnitOfWork = Depends(get_uow),
+    session=Depends(get_session),
 ):
     try:
-        # logging.info(f"Данные формы {model_type} - {data}")
+        logging.info(
+            f"Данные формы {prompt_ru} {include_color_instruction}  {replace_colors_with_hex}"
+        )
 
         # input_data = json.loads(data)
 
-        prediction_request = PromptEnhancerInput(
-            prompt_ru=prompt_ru,
-            include_color_instruction=include_color_instruction,
-            replace_colors_with_hex=replace_colors_with_hex,
+        # prediction_request = PromptEnhancerInput(
+        #     prompt_ru=prompt_ru,
+        #     include_color_instruction=include_color_instruction,
+        #     replace_colors_with_hex=replace_colors_with_hex,
+        # )
+        # input_data = json.dumps(prediction_request)
+
+        input_data = json.dumps(
+            {
+                "prompt_ru": prompt_ru,
+                "include_color_instruction": include_color_instruction,
+                "replace_colors_with_hex": replace_colors_with_hex,
+            }
         )
 
-        input_data = json.dumps(prediction_request)
+        logging.info(f"Данные для формы predict приняты {input_data}")
+        with UnitOfWork(session) as uow:
+            user = uow.users.get_user_by_email(email)
+            if user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist"
+                )
 
-        logging.info(f"Данные для формы predict приняты {prediction_request}")
-
-        user = uow.users.get_user_by_email(email)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist"
+            # Создаём задачу
+            logging.info(f" Создаём задачу task = CreatePredictionTask(: {user}")
+            task = CreatePredictionTask(
+                user=user,
+                uow=uow,
+                data=PredictionRequest(
+                    input_data=input_data, model_type="prompt-enhancer"
+                ),
             )
 
-        # Создаём задачу
-        logging.info(f" Создаём задачу task = CreatePredictionTask(: {user}")
-        task = CreatePredictionTask(
-            user=user,
-            uow=uow,
-            data=PredictionRequest(input_data=input_data, model_type="prompt-enhancer"),
-        )
-
-        # Инициализация init_rabbitmq
-        logging.info(f"Инициализация init_rabbitmq")
-        task.init_rabbitmq()
-        # Отправляем заказ в очередь
-        logging.info(f"Отправляем заказ в очередь")
-        if task.process():
-            logging.info(f"Заказ успешно отправлен в очередь")
-            return RedirectResponse(
-                url=f"/predict/status/{prediction_service.prediction.id}",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+            # Инициализация init_rabbitmq
+            logging.info(f"Инициализация init_rabbitmq")
+            task.init_rabbitmq()
+            # Отправляем заказ в очередь
+            logging.info(f"Отправляем заказ в очередь")
+            if task.process():
+                logging.info(f"Заказ успешно отправлен в очередь")
+                return RedirectResponse(
+                    url=f"/predict/status/{task.prediction.id}",
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
 
     except json.JSONDecodeError:
         return templates.TemplateResponse(
@@ -265,8 +277,8 @@ async def create_prediction_front(
         return templates.TemplateResponse(
             "predict.html", {"request": request, "error": str(e)}
         )
-    finally:
-        task.close()
+    # finally:
+    #     task.close()
 
 
 @home_route.get("/predict/status/{task_id}", response_class=HTMLResponse)

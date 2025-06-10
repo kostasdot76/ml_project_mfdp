@@ -9,19 +9,22 @@ from services.service.RabbitMQClient import RabbitMQClient
 from sqlmodel import Session
 from fastapi import Depends
 from services.logging.logging import get_logger
-from api import get_ml_model
+from services.service.build_prompt_enhancer_model import build_prompt_enhancer_model
 
 logging = get_logger(logger_name=__name__)
 
 settings = get_settings()
 
-model = get_ml_model()
+# Инициализация модели при запуске воркера
+model = build_prompt_enhancer_model()
+logging.info("PromptEnhancerModel initialized")
 
 
 def process_task(ch, method, properties, body):
     try:
-        decoded_body = body.decode().strip('"').replace('\\"', '"')
-        task = json.loads(decoded_body)
+        logging.info(f"body {body}")
+        # decoded_body = body.decode().strip('"').replace('\\"', '"')
+        task = json.loads(body)
 
         logging.info(f"Load task {task}")
         session = get_session2()

@@ -8,24 +8,14 @@ from database.database import init_db, get_session
 from fastapi.middleware.cors import CORSMiddleware
 from services.logging.logging import get_logger
 from services.service.mlmodelService import BaseMLModel
-from services.service.build_prompt_enhancer_model import build_prompt_enhancer_model
 from services.service.UnitOfWork import UnitOfWork
 from sqlmodel import Session
 
 logging = get_logger(logger_name=__name__)
 
-# Глобальная переменная модели
-_ml_model: BaseMLModel = None
-
-
-def get_ml_model() -> BaseMLModel:
-    if _ml_model is None:
-        raise RuntimeError("ML-модель не инициализирована")
-    return _ml_model
-
 
 def create_app() -> FastAPI:
-    global _ml_model
+    # global _ml_model
 
     app = FastAPI()
 
@@ -38,13 +28,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    init_db()
-    subprocess.run(["dvc", "pull"])
-    logging.info("dvc pull")
-
-    # Инициализация модели
-    _ml_model = build_prompt_enhancer_model()
-    logging.info("PromptEnhancerModel initialized")
+    # Healthcheck endpoint
+    @app.get("/health")
+    async def health_check():
+        return {"status": "ok"}
 
     # Передача зависимости
     app.include_router(home_route)
@@ -55,6 +42,20 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+@app.on_event("startup")
+def on_startup():
+    logging.info("Инициализация базы данных...")
+    try:
+        init_db()
+        subprocess.run(["dvc", "pull"])
+        logging.info("dvc pull")
+        logging.info("Запуск приложения успешно завершен")
+    except Exception as e:
+        logging.error(f"Ошибка при запуске: {str(e)}")
+        raise
+
 
 if __name__ == "__main__":
     logging.info("api run")

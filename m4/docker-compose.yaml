@@ -12,8 +12,6 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-    # ollama:
-    #   condition: service_healthy
     networks:
       - event-planner-network
     healthcheck:
@@ -21,7 +19,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 120s
   web-proxy:
     image: nginx:1.25-alpine
     volumes:
@@ -85,9 +83,17 @@ services:
     volumes:
       - app:/app
     depends_on:  
-      app:
-        condition: service_healthy        
+      rabbitmq:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy    
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pika; connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq')); connection.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s    
     networks:
       - event-planner-network
   ollama:
@@ -114,9 +120,16 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-    entrypoint: /bin/sh -c "ollama run gemma3:1b"
+    command: 
+      - "run"
+      - "gemma3:1b"      
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    # entrypoint: /bin/sh -c "exec -it gemma-server ollama run gemma3:1b"
     volumes:
       - ollama_data:/root/.ollama
+    networks:
+      - event-planner-network      
     restart: "no"
 
 volumes:

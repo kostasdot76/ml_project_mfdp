@@ -66,7 +66,7 @@ class PredictionRepository(BaseRepository[Prediction]):
         self,
         user_id: int,
         model_type: str,
-        input_data: Dict[str, float],
+        input_data: str,
         result: str,
         cost: Decimal,
         status: PredictionStatus.waiting,

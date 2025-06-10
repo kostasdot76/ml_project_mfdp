@@ -18,7 +18,7 @@ from services.service.PromptInterface import LLMInterface
 
 class OllamaLLM(LLMInterface):
     def __init__(
-        self, model: str = "gemma3:1b", url: str = "http://localhost:11434/api/generate"
+        self, model: str = "gemma3:1b", url: str = "http://ollama:11434/api/generate"
     ):
         self.model = model
         self.url = url

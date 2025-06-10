@@ -40,9 +40,10 @@ class BaseMLModel(ABC):
         pass
 
     def validate_input(self, data) -> bool:
-        if not isinstance(data, Dict):
+        if not isinstance(data, str):
             return False
-        return all(isinstance(x, (int, float)) for x in data.values())
+        # return all(isinstance(x, (int, float)) for x in data.values())
+        return True
 
 
 class RegressionModel(BaseMLModel):
