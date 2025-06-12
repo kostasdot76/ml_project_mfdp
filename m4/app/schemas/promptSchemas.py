@@ -27,3 +27,16 @@ class PromptEnhancerInput(BaseModel):
 class PromptEnhancerOutput(BaseModel):
     enriched_prompt: str
     semantic_roles: Dict[str, dict]
+
+
+class PromptImageInput(BaseModel):
+    prompt: str
+    prompt_order_id: int
+    negative_prompt: str = "text, watermark, signature, blurry, low quality"
+
+
+class PromptImageOutput(BaseModel):
+    prompt: str
+    prompt_order_id: int
+    image: str
+    negative_prompt: str

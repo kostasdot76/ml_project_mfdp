@@ -5,10 +5,290 @@
 {% block content %}
 <h1>Task #{{ prediction.id }}</h1>
 
-<p>Status: {{ prediction.status }}</p>
-{% if prediction.result %}
-    <p>Result: {{ prediction.result }}</p>
+<div class="task-info">
+    <p><strong>Status:</strong> {{ prediction.status }}</p>
+    <p><strong>Model type:</strong> {{ prediction.model_type }}</p>
+    <p><strong>Created at:</strong> {{ prediction.timestamp }}</p>
+</div>
+
+{% if prediction.model_type == 'image_generator' and result_obj %}
+<div class="image-result">
+    <h2>Generated Image:</h2>
+    {% if result_obj.image %}
+    <!-- Исправленная обработка пути к изображению -->
+    {% set raw_path = result_obj.image.replace('\\', '/') %}
+    {% if raw_path.startswith('static/') %}
+    {% set image_url = '/' + raw_path %}
+    {% else %}
+    {% set image_url = '/static/' + raw_path %}
+    {% endif %}
+
+    <div class="image-container">
+        <img src="{{ image_url }}" alt="Generated image" class="generated-image" onerror="handleImageError(this)">
+    </div>
+
+    <!-- Отладочная информация (можно убрать в продакшене) -->
+    <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px;">
+        <p><strong>Original path:</strong> {{ result_obj.image }}</p>
+        <p><strong>Processed URL:</strong> {{ image_url }}</p>
+        <p><strong>Full URL:</strong> <a href="{{ image_url }}" target="_blank">{{ request.base_url }}{{ image_url[1:]
+                }}</a></p>
+    </div>
+
+    <div class="image-actions">
+        <a href="{{ image_url }}" download="image_order_{{ prediction.id }}.jpg" class="download-btn">
+            Download Image
+        </a>
+        <button onclick="checkImageExists('{{ image_url }}')" class="check-btn">
+            Check Image Availability
+        </button>
+    </div>
+    {% else %}
+    <p class="error">Image path not found in result</p>
+    {% endif %}
+</div>
+
+{% elif prediction.model_type == 'prompt_enhancer' and result_obj %}
+<div class="prompt-result">
+    <h2>Enhanced Prompt:</h2>
+    <div class="markdown-content">
+        {{ result_obj.enriched_prompt|markdown }}
+    </div>
+    <div class="prompt-raw">
+        <button class="toggle-raw-btn">Show Raw Text</button>
+        <pre class="raw-content" style="display: none;">{{ result_obj.enriched_prompt }}</pre>
+    </div>
+</div>
+{% endif %}
+
+{% if not result_obj or ('enriched_prompt' not in result_obj and 'image' not in result_obj) %}
+<p class="no-result">Result not available yet. Please refresh the page.</p>
+<div class="refresh-container">
+    <button id="refresh-btn" class="refresh-btn">Refresh Status</button>
+    <span id="refresh-timer">Auto-refresh in 30 seconds</span>
+</div>
+{% endif %}
+
+<!-- Отладочная информация о result_obj -->
+{% if result_obj %}
+<details class="debug-details">
+    <summary>Debug: Result Object</summary>
+    <pre>{{ result_obj|tojson(indent=2) }}</pre>
+</details>
 {% endif %}
 
 {% include '_site_map.html' %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle raw prompt content
+        const toggleBtn = document.querySelector('.toggle-raw-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function () {
+                const rawContent = document.querySelector('.raw-content');
+                if (rawContent.style.display === 'none') {
+                    rawContent.style.display = 'block';
+                    this.textContent = 'Hide Raw Text';
+                } else {
+                    rawContent.style.display = 'none';
+                    this.textContent = 'Show Raw Text';
+                }
+            });
+        }
+
+        // Auto-refresh logic
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            let countdown = 30;
+            const timerElement = document.getElementById('refresh-timer');
+            const timerInterval = setInterval(() => {
+                countdown--;
+                timerElement.textContent = `Auto-refresh in ${countdown} seconds`;
+
+                if (countdown <= 0) {
+                    clearInterval(timerInterval);
+                    location.reload();
+                }
+            }, 1000);
+
+            refreshBtn.addEventListener('click', function () {
+                clearInterval(timerInterval);
+                location.reload();
+            });
+        }
+    });
+
+    // Функция для обработки ошибок загрузки изображения
+    function handleImageError(img) {
+        const container = img.parentElement;
+        const errorMsg = document.createElement('div');
+        errorMsg.innerHTML = `
+            <div class="image-error">
+                <p><strong>Image failed to load!</strong></p>
+                <p>Attempted URL: <code>${img.src}</code></p>
+                <p>Please check if the file exists and the path is correct.</p>
+            </div>
+        `;
+        errorMsg.className = 'error-message';
+        container.replaceChild(errorMsg, img);
+    }
+
+    // Функция для проверки доступности изображения
+    function checkImageExists(imageUrl) {
+        fetch(imageUrl, { method: 'HEAD' })
+            .then(response => {
+                const status = response.ok ? 'Available ✅' : `Not found (${response.status}) ❌`;
+                alert(`Image status: ${status}\nURL: ${imageUrl}`);
+            })
+            .catch(error => {
+                alert(`Error checking image: ${error.message}\nURL: ${imageUrl}`);
+            });
+    }
+</script>
+
+<style>
+    .task-info {
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .image-container {
+        margin: 15px 0;
+        text-align: center;
+    }
+
+    .generated-image {
+        max-width: 100%;
+        max-height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .download-btn,
+    .check-btn {
+        display: inline-block;
+        padding: 8px 15px;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .download-btn {
+        background-color: #007bff;
+    }
+
+    .download-btn:hover {
+        background-color: #0056b3;
+    }
+
+    .check-btn {
+        background-color: #17a2b8;
+    }
+
+    .check-btn:hover {
+        background-color: #138496;
+    }
+
+    .debug-info {
+        font-family: monospace;
+        border-left: 3px solid #007bff;
+    }
+
+    .debug-details {
+        margin: 20px 0;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .debug-details pre {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+
+    .image-error {
+        padding: 20px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+        color: #721c24;
+        text-align: left;
+    }
+
+    .error-message {
+        margin: 15px 0;
+    }
+
+    .markdown-content {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+
+    .prompt-raw {
+        margin-top: 15px;
+    }
+
+    .toggle-raw-btn {
+        padding: 5px 10px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .raw-content {
+        padding: 10px;
+        background-color: #e9ecef;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .no-result {
+        color: #6c757d;
+        font-style: italic;
+        margin: 20px 0;
+    }
+
+    .refresh-container {
+        margin: 15px 0;
+    }
+
+    .refresh-btn {
+        padding: 8px 15px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .error {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
 {% endblock %}

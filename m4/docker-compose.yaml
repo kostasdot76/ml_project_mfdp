@@ -82,6 +82,7 @@ services:
       - ./app/.env
     volumes:
       - app:/app
+      - ./static:/app/static
     depends_on:  
       rabbitmq:
         condition: service_healthy

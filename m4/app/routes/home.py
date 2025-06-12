@@ -26,17 +26,28 @@ from services.auth.predictionform import PredictionForm
 from services.service.mlmodelService import BaseMLModel
 from fastapi import Form
 from services.logging.logging import get_logger
+from markdown import markdown
 
 logging = get_logger(logger_name=__name__)
 
 settings = get_settings()
 home_route = APIRouter()
-home_route.mount("/static", StaticFiles(directory="static"), name="static")
+# home_route.mount("/static", StaticFiles(directory="static"), name="static")
 auth_route = APIRouter(prefix="/auth", tags=["Auth"])
-auth_route.mount("/static", StaticFiles(directory="static"), name="static")
+# auth_route.mount("/static", StaticFiles(directory="static"), name="static")
 
 hash_password = HashPassword()
 templates = Jinja2Templates(directory="view")
+
+templates.env.filters["markdown"] = lambda text: markdown(text)
+
+"""
+# Для генерации изображений
+result = {"image": "images/generated_123.png"}
+
+# Для улучшения промптов
+result = {"prompt": "### Улучшенный промпт\n\nОписание изображения..."}
+"""
 
 
 @home_route.get("/", response_class=HTMLResponse)
@@ -210,16 +221,18 @@ async def predict_page(request: Request, user: str = Depends(authenticate_cookie
 @home_route.post("/predict", response_class=HTMLResponse)
 async def create_prediction_front(
     request: Request,
-    prompt_ru: str = Form(...),
+    model_type: str = Form(...),
+    prompt: str = Form(...),
     include_color_instruction: bool = Form(False),
     replace_colors_with_hex: bool = Form(True),
+    # negative_prompt: str = "text, watermark, signature, blur",
     email: str = Depends(authenticate_cookie),
     # uow: UnitOfWork = Depends(get_uow),
     session=Depends(get_session),
 ):
     try:
         logging.info(
-            f"Данные формы {prompt_ru} {include_color_instruction}  {replace_colors_with_hex}"
+            f"Данные формы {prompt} {include_color_instruction}  {replace_colors_with_hex}"
         )
 
         # input_data = json.loads(data)
@@ -230,15 +243,22 @@ async def create_prediction_front(
         #     replace_colors_with_hex=replace_colors_with_hex,
         # )
         # input_data = json.dumps(prediction_request)
-
-        input_data = json.dumps(
-            {
-                "prompt_ru": prompt_ru,
-                "include_color_instruction": include_color_instruction,
-                "replace_colors_with_hex": replace_colors_with_hex,
-            }
-        )
-
+        if model_type == "prompt_enhancer":
+            input_data = json.dumps(
+                {
+                    "prompt_ru": prompt,
+                    "include_color_instruction": include_color_instruction,
+                    "replace_colors_with_hex": replace_colors_with_hex,
+                }
+            )
+        else:
+            input_data = json.dumps(
+                {
+                    "prompt": prompt,
+                    "order_id": 0,
+                    "negative_prompt": "text, watermark, signature, blur",
+                }
+            )
         logging.info(f"Данные для формы predict приняты {input_data}")
         with UnitOfWork(session) as uow:
             user = uow.users.get_user_by_email(email)
@@ -252,9 +272,7 @@ async def create_prediction_front(
             task = CreatePredictionTask(
                 user=user,
                 uow=uow,
-                data=PredictionRequest(
-                    input_data=input_data, model_type="prompt-enhancer"
-                ),
+                data=PredictionRequest(input_data=input_data, model_type=model_type),
             )
 
             # Инициализация init_rabbitmq
@@ -296,12 +314,27 @@ async def get_prediction_status_front(
             if not prediction or prediction.user_id != user.id:
                 raise HTTPException(status_code=404, detail="Task not found")
 
+            logging.info(f"prediction.result Is {prediction.result}")
+            # выделеим результат
+            result_obj = None
+            if prediction.result:
+                try:
+                    result_obj = json.loads(prediction.result)
+                except json.JSONDecodeError:
+                    result_obj = {"error": "Invalid result format"}
+            logging.info(f" result_obj {result_obj}")
             return templates.TemplateResponse(
-                "status.html", {"request": request, "prediction": prediction}
+                "status.html",
+                {
+                    "request": request,
+                    "prediction": prediction,
+                    "result_obj": result_obj,
+                },
             )
     except Exception as e:
+        logging.error(f"Error in prediction status endpoint: {str(e)}")
         return templates.TemplateResponse(
-            "error.html", {"request": request, "error": str(e)}
+            "error.html", {"request": request, "error": str(e), "task_id": task_id}
         )
 
 

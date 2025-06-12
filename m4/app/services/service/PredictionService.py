@@ -10,6 +10,7 @@ from services.service.mlmodelService import (
     RegressionModel,
     ClassificationModel,
     BaseMLModel,
+    BlankModel,
 )
 from services.service.build_prompt_enhancer_model import build_prompt_enhancer_model
 from services.service.TransactionService import DebtTransaction
@@ -18,10 +19,29 @@ from database.config import get_settings
 from services.service.RabbitMQClient import RabbitMQClient
 from services.logging.logging import get_logger
 from pydantic import ConfigDict
+import numpy as np
 
 logging = get_logger(logger_name=__name__)
 
 settings = get_settings()
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """Кастомный энкодер для обработки NumPy типов данных"""
+
+    def default(self, obj):
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump()
+
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        return super().default(obj)
 
 
 class PredictionService(ABC):
@@ -57,13 +77,17 @@ class PredictionService(ABC):
             self.rmq_client = None
 
     def _get_model(self) -> BaseMLModel:
-        if self._model_type == "prompt_enhancer":
-            return BaseMLModel("prompt_enhancer")
+        try:
+            if self._model_type in ["prompt_enhancer", "image_generator"]:
+                return BlankModel(self._model_type)
 
-        if self._model_type == "regression":
-            return RegressionModel(settings.MODEL_NAME)
+            if self._model_type == "regression":
+                return RegressionModel(settings.MODEL_NAME)
 
-        return ClassificationModel(settings.MODEL_NAME)
+            return ClassificationModel(settings.MODEL_NAME)
+        except Exception as e:
+            logging.error(f"Error in _get_model: {str(e)}")
+            raise
 
     @abstractmethod
     def _validate(self) -> bool:
@@ -136,7 +160,7 @@ class CreatePrediction(PredictionService):
         # логика создания прогноза
         preprocessed_data = self.__model.preprocess_data(self._input_data)
         result = self.__model.predict(preprocessed_data)
-        return f"Result for {self._model_type}: {result}"
+        return json.dumps(result, cls=NumpyEncoder)
 
     def _apply_changes(self) -> PredictionStatus:
         # Создаем транзакцию на списание
@@ -208,9 +232,14 @@ class UpdatePredictionTask(PredictionService):
 
     def __init__(self, uow: UnitOfWork, prediction_id: int, model: BaseMLModel):
         super().__init__(None, uow)  # User не требуется для обработки
-        self.prediction = self.uow.predictions.get_by_id(prediction_id)
-        self._model_type = self.prediction.model_type
-        self.__model = model
+        prediction = self.uow.predictions.get_by_id(prediction_id)
+        if prediction:
+            self.prediction = self.uow.predictions.get_by_id(prediction_id)
+            self._model_type = self.prediction.model_type
+            self.__model = model
+        else:
+            logging.info("Заказ не найден {prediction_id}")
+            raise
 
     def _validate(self) -> bool:
         # проверка данных по требованиям модели
@@ -221,9 +250,20 @@ class UpdatePredictionTask(PredictionService):
 
     def _make_prediction(self) -> str:
         # логика создания прогноза
-        preprocessed_data = self.__model.preprocess_data(self.prediction.input_data)
-        result = self.__model.predict(preprocessed_data)
-        return f"Result for {self._model_type}: {result}"
+        try:
+            preprocessed_data = self.__model.preprocess_data(self.prediction.input_data)
+            preprocessed_data["prompt_order_id"] = self.prediction.id
+            logging.info(
+                f" _make_prediction, before predict json, preprocessed_data is : {preprocessed_data}"
+            )
+
+            result = self.__model.predict(preprocessed_data)
+
+            logging.info(f" _make_prediction, result before json is : {result}")
+
+            return json.dumps(result, cls=NumpyEncoder)
+        except Exception as e:
+            logging.info(f"Error _make_prediction: {str(e)}")
 
     def _apply_changes(self) -> PredictionStatus:
         # Создаем транзакцию на списание

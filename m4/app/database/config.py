@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     BRAND_DATA_PATH: Optional[str] = None
     HF_API_TOKEN: Optional[str] = None
     LLM_TYPE: Optional[str] = None
+    IMAGE_PATH: Optional[str] = None
 
     @property
     def DATABASE_URL_asyncpg(self):

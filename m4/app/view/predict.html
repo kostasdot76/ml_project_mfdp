@@ -19,19 +19,34 @@
 
     <!-- Форма -->
     <form method="post" action="/predict">
-        <label for="prompt_ru">Описание изображения:</label>
-        <textarea id="prompt_ru" name="prompt_ru" rows="4" cols="50"></textarea>
+        <div class="form-group">
+            <label for="model_type">Model Type</label>
+            <select name="model_type" id="model_type" required>
+                <option value="">-- Select Model --</option>
+                <option value="prompt_enhancer">prompt_enhancer</option>
+                <option value="image_generator">image_generator</option>
+            </select>
 
-        <br>
-        <input type="checkbox" id="include_color_instruction" name="include_color_instruction" value="true">
-        <label for="include_color_instruction">Добавить инструкции по цветам</label>
+            <!-- Изменено имя поля с prompt_ru на prompt -->
+            <label for="prompt">Описание изображения:</label>
+            <textarea id="prompt" name="prompt" rows="4" cols="50" required></textarea>
 
-        <br>
-        <input type="checkbox" id="replace_colors_with_hex" name="replace_colors_with_hex" value="true">
-        <label for="replace_colors_with_hex">Заменить цвета на HEX</label>
+            <div class="form-hint">
+                Для "prompt_enhancer": введите описание на русском<br>
+                Для "image_generator": введите описание на английском
+            </div>
 
-        <br><br>
-        <button type="submit">Отправить</button>
+            <br>
+            <input type="checkbox" id="include_color_instruction" name="include_color_instruction" value="true">
+            <label for="include_color_instruction">Добавить инструкции по цветам</label>
+
+            <br>
+            <input type="checkbox" id="replace_colors_with_hex" name="replace_colors_with_hex" value="true" checked>
+            <label for="replace_colors_with_hex">Заменить цвета на HEX</label>
+
+            <br><br>
+            <button type="submit">Отправить</button>
+        </div>
     </form>
 
     <!-- Навигация -->

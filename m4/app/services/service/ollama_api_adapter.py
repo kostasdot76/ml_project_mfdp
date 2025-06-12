@@ -1,6 +1,9 @@
 import requests
 from services.service.PromptInterface import LLMInterface
+from services.logging.logging import get_logger
 
+
+logging = get_logger(logger_name=__name__)
 
 # class OllamaLLM(LLMInterface):
 #     def __init__(
@@ -28,4 +31,8 @@ class OllamaLLM(LLMInterface):
         response = requests.post(self.url, json=payload)
         response.raise_for_status()
         result = response.json()
-        return result.get("response", "").strip()
+        res = result.get("response", "").strip()
+
+        logging.info(f" Ollama result {res}")
+
+        return res.split("Prompt:**")[-1].split("---")[0].strip()

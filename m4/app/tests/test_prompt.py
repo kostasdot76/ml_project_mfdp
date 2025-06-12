@@ -3,7 +3,7 @@ import pickle
 from pathlib import Path
 
 from services.service.PromptEnhancer import PromptEnhancer
-from m4.app.schemas.promptSchemas import PromptInput, PromptOutput
+from schemas.promptSchemas import PromptInput, PromptOutput
 from services.service.PromptInterface import (
     TranslatorInterface,
     LLMInterface,

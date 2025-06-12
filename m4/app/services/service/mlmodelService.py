@@ -14,7 +14,11 @@ class BaseMLModel(ABC):
         self._model_name = model_name
         self._cost = 10
         self._is_ready = False
-        self._model = self.load_model() if model_name != "prompt_enhancer" else None
+        self._model = (
+            self.load_model()
+            if model_name not in ["prompt_enhancer", "image_generator"]
+            else None
+        )
 
     def load_model(self):
         model_path = f"/app/{self._model_name}"
@@ -44,6 +48,18 @@ class BaseMLModel(ABC):
             return False
         # return all(isinstance(x, (int, float)) for x in data.values())
         return True
+
+
+class BlankModel(BaseMLModel):
+    """
+    модель пустышка
+    """
+
+    def __init__(self, model_name):
+        super().__init__(model_name)
+
+    def predict(self, data: list) -> list:
+        return data
 
 
 class RegressionModel(BaseMLModel):

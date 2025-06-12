@@ -10,13 +10,16 @@ from sqlmodel import Session
 from fastapi import Depends
 from services.logging.logging import get_logger
 from services.service.build_prompt_enhancer_model import build_prompt_enhancer_model
+from services.service.build_image_generator_model import build_image_generator_model
 
 logging = get_logger(logger_name=__name__)
 
 settings = get_settings()
 
 # Инициализация модели при запуске воркера
-model = build_prompt_enhancer_model()
+# ["prompt_enhancer", "image_generator"]
+model_prompt_enhancer = build_prompt_enhancer_model()
+model_image_generator = build_image_generator_model()
 logging.info("PromptEnhancerModel initialized")
 
 
@@ -30,9 +33,16 @@ def process_task(ch, method, properties, body):
         session = get_session2()
         with UnitOfWork(session=session) as uow:
             logging.info(f" found task {task['prediction_id']}")
+            model = (
+                model_prompt_enhancer
+                if task["model_type"] == "prompt_enhancer"
+                else model_image_generator
+            )
+            logging.info(f" task {task["prediction_id"]}  + model for {task['model_type']} asigned as  {model}")
             service = UpdatePredictionTask(uow, task["prediction_id"], model=model)
 
             try:
+                logging.info(f"try process for Task {task['prediction_id']}")
                 if service.process():
                     logging.info(f"Task {task['prediction_id']} completed")
                     ch.basic_ack(delivery_tag=method.delivery_tag)
