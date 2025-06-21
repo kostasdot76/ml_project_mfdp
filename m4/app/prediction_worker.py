@@ -38,7 +38,9 @@ def process_task(ch, method, properties, body):
                 if task["model_type"] == "prompt_enhancer"
                 else model_image_generator
             )
-            logging.info(f" task {task["prediction_id"]}  + model for {task['model_type']} asigned as  {model}")
+            logging.info(
+                f" task {task['prediction_id']}  + model for {task['model_type']} asigned as  {model}"
+            )
             service = UpdatePredictionTask(uow, task["prediction_id"], model=model)
 
             try:

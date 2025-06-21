@@ -20,6 +20,7 @@
     <!-- Форма -->
     <form method="post" action="/predict">
         <div class="form-group">
+            <!-- 1. Model Type - первый элемент -->
             <label for="model_type">Model Type</label>
             <select name="model_type" id="model_type" required>
                 <option value="">-- Select Model --</option>
@@ -27,9 +28,12 @@
                 <option value="image_generator">image_generator</option>
             </select>
 
-            <!-- Изменено имя поля с prompt_ru на prompt -->
+            <br><br>
+
+            <!-- 2. Поле ввода описания - второй элемент -->
             <label for="prompt">Описание изображения:</label>
-            <textarea id="prompt" name="prompt" rows="4" cols="50" required></textarea>
+            <br>
+            <textarea id="prompt" name="prompt" rows="20" cols="100" required></textarea>
 
             <div class="form-hint">
                 Для "prompt_enhancer": введите описание на русском<br>
@@ -37,6 +41,8 @@
             </div>
 
             <br>
+
+            <!-- 3. Галочки - третий и четвертый элементы -->
             <input type="checkbox" id="include_color_instruction" name="include_color_instruction" value="true">
             <label for="include_color_instruction">Добавить инструкции по цветам</label>
 
