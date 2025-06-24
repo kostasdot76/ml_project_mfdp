@@ -1,20 +1,55 @@
-<!-- 
-This code snippet will appear in each file, so to avoid re-writing it we define 
-it only once here. 
--->
+<!-- Навигационное меню -->
+<div class="site-navigation">
+    <a href="/" class="nav-link">🏡 Главная</a>
 
-<!-- <a href="/">Home</a> | 
-<a href="/auth/login">Login</a> |
-<a href="/private">Private</a> |
-<a href="/auth/logout">Logout</a> -->
+    {% if user %}
+    <a href="/balance" class="nav-link">💰 Баланс</a>
+    <a href="/predict" class="nav-link">🎨 Создать</a>
+    <a href="/predict/history" class="nav-link">📜 История</a>
+    <a href="/auth/logout" class="nav-link">🚪 Выход</a>
 
-<a href="/">Home</a> |
-<a href="/auth/login">Login</a> |
-<a href="/auth/signup">Sign Up</a> |
-<a href="/balance">Balance</a> |
-<a href="/predict">Predict</a> |
-<a href="/predict/history">History</a> |
-<a href="/auth/logout">Logout</a>
-{% if user and user.role == 'admin' %}
-<a href="/admin">Admin</a> |
-{% endif %}
+    {% if user and user.role == 'admin' %}
+    <a href="/admin" class="nav-link">⚙️ Админ</a>
+    {% endif %}
+    {% else %}
+    <a href="/auth/login" class="nav-link">🔐 Вход</a>
+    <a href="/auth/signup" class="nav-link">📝 Регистрация</a>
+    {% endif %}
+</div>
+
+<style>
+    .site-navigation {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .nav-link:hover {
+        color: var(--primary-color);
+        background-color: var(--accent-light);
+        transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+        color: var(--primary-color);
+        background-color: var(--accent-light);
+    }
+
+    /* Разделитель убираем, используем flex gap */
+    .site-navigation::before,
+    .site-navigation::after {
+        content: none;
+    }
+</style>

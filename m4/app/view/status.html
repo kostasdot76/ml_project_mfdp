@@ -3,104 +3,183 @@
 {% block title %}Task Status{% endblock %}
 
 {% block content %}
-<h1>Task #{{ prediction.id }}</h1>
+<div class="container">
+    <h1>Task Status</h1>
 
-<div class="task-info">
-    <p><strong>Status:</strong> {{ prediction.status }}</p>
-    <p><strong>Model type:</strong> {{ prediction.model_type }}</p>
-    <p><strong>Created at:</strong> {{ prediction.timestamp }}</p>
-</div>
+    <!-- Основная информация о задаче -->
+    <div class="card task-status-card">
+        <div class="card-header">
+            <h2>Task #{{ prediction.id }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="task-info-grid">
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="status-badge status-{{ prediction.status.lower() }}">{{ prediction.status }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Model type:</span>
+                    <span class="info-value">{{ prediction.model_type }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Created at:</span>
+                    <span class="info-value">{{ prediction.timestamp }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-{% if prediction.model_type == 'image_generator' and result_obj %}
-<div class="image-result">
-    <h2>Generated Image:</h2>
-    {% if result_obj.image %}
-    <!-- Исправленная обработка пути к изображению -->
-    {% set raw_path = result_obj.image.replace('\\', '/') %}
-    {% if raw_path.startswith('static/') %}
-    {% set image_url = '/' + raw_path %}
-    {% else %}
-    {% set image_url = '/static/' + raw_path %}
+    <!-- Результат для генерации изображений -->
+    {% if prediction.model_type == 'image_generator' and result_obj %}
+    <div class="card result-card">
+        <div class="card-header">
+            <h2>Generated Image</h2>
+        </div>
+        <div class="card-body">
+            {% if result_obj.image %}
+            <!-- Обработка пути к изображению -->
+            {% set raw_path = result_obj.image.replace('\\', '/') %}
+            {% if raw_path.startswith('static/') %}
+            {% set image_url = '/' + raw_path %}
+            {% else %}
+            {% set image_url = '/static/' + raw_path %}
+            {% endif %}
+
+            <div class="image-display">
+                <div class="image-container">
+                    <img src="{{ image_url }}" alt="Generated image" class="generated-image"
+                        onerror="handleImageError(this)">
+                </div>
+
+                <div class="image-actions">
+                    <a href="{{ image_url }}" download="image_order_{{ prediction.id }}.jpg" class="btn btn-primary">
+                        <span class="btn-icon">📥</span>
+                        Download Image
+                    </a>
+                    <button onclick="checkImageExists('{{ image_url }}')" class="btn btn-secondary">
+                        <span class="btn-icon">🔍</span>
+                        Check Availability
+                    </button>
+                    <button onclick="copyImageUrl('{{ image_url }}')" class="btn btn-outline">
+                        <span class="btn-icon">📋</span>
+                        Copy URL
+                    </button>
+                </div>
+            </div>
+
+            <!-- Отладочная информация (скрытая по умолчанию) -->
+            <details class="debug-section">
+                <summary class="debug-toggle">Debug Information</summary>
+                <div class="debug-content">
+                    <div class="debug-item">
+                        <strong>Original path:</strong>
+                        <code>{{ result_obj.image }}</code>
+                    </div>
+                    <div class="debug-item">
+                        <strong>Processed URL:</strong>
+                        <code>{{ image_url }}</code>
+                    </div>
+                    <div class="debug-item">
+                        <strong>Full URL:</strong>
+                        <a href="{{ image_url }}" target="_blank" class="text-link">{{ request.base_url }}{{
+                            image_url[1:] }}</a>
+                    </div>
+                </div>
+            </details>
+            {% else %}
+            <div class="alert alert-error">
+                <strong>Error:</strong> Image path not found in result
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Результат для улучшения промптов -->
+    {% elif prediction.model_type == 'prompt_enhancer' and result_obj %}
+    <div class="card result-card">
+        <div class="card-header">
+            <h2>Enhanced Prompt</h2>
+        </div>
+        <div class="card-body">
+            <div class="prompt-display">
+                <div class="prompt-content-wrapper">
+                    <pre class="prompt-content">{{ result_obj.enriched_prompt }}</pre>
+                </div>
+
+                <div class="prompt-actions">
+                    <button onclick="copyPromptText()" class="btn btn-secondary">
+                        <span class="btn-icon">📋</span>
+                        Copy Prompt
+                    </button>
+                </div>
+
+                <!-- <div class="raw-content-wrapper" style="display: none;">
+                    <pre class="raw-content">{{ result_obj.enriched_prompt }}</pre>
+                </div> -->
+            </div>
+        </div>
+    </div>
     {% endif %}
 
-    <div class="image-container">
-        <img src="{{ image_url }}" alt="Generated image" class="generated-image" onerror="handleImageError(this)">
-    </div>
+    <!-- Сообщение об отсутствии результата -->
+    {% if not result_obj or ('enriched_prompt' not in result_obj and 'image' not in result_obj) %}
+    <div class="card waiting-card">
+        <div class="card-body text-center">
+            <div class="loading-spinner"></div>
+            <h3>Processing...</h3>
+            <p class="text-muted">Result not available yet. The page will refresh automatically.</p>
 
-    <!-- Отладочная информация (можно убрать в продакшене) -->
-    <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px;">
-        <p><strong>Original path:</strong> {{ result_obj.image }}</p>
-        <p><strong>Processed URL:</strong> {{ image_url }}</p>
-        <p><strong>Full URL:</strong> <a href="{{ image_url }}" target="_blank">{{ request.base_url }}{{ image_url[1:]
-                }}</a></p>
+            <div class="refresh-controls">
+                <button id="refresh-btn" class="btn btn-primary">
+                    <span class="btn-icon">🔄</span>
+                    Refresh Now
+                </button>
+                <div class="refresh-timer" id="refresh-timer">Auto-refresh in 30 seconds</div>
+            </div>
+        </div>
     </div>
-
-    <div class="image-actions">
-        <a href="{{ image_url }}" download="image_order_{{ prediction.id }}.jpg" class="download-btn">
-            Download Image
-        </a>
-        <button onclick="checkImageExists('{{ image_url }}')" class="check-btn">
-            Check Image Availability
-        </button>
-    </div>
-    {% else %}
-    <p class="error">Image path not found in result</p>
     {% endif %}
-</div>
 
-{% elif prediction.model_type == 'prompt_enhancer' and result_obj %}
-<div class="prompt-result">
-    <h2>Enhanced Prompt:</h2>
-    <div class="markdown-content">
-        {{ result_obj.enriched_prompt|markdown }}
+    <!-- Отладочная информация о result_obj (скрытая по умолчанию) -->
+    {% if result_obj %}
+    <details class="debug-section">
+        <summary class="debug-toggle">Debug: Result Object</summary>
+        <div class="debug-content">
+            <pre class="debug-json">{{ result_obj|tojson(indent=2) }}</pre>
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- Навигация -->
+    <div class="navigation-section">
+        {% include '_site_map.html' %}
     </div>
-    <div class="prompt-raw">
-        <button class="toggle-raw-btn">Show Raw Text</button>
-        <pre class="raw-content" style="display: none;">{{ result_obj.enriched_prompt }}</pre>
-    </div>
 </div>
-{% endif %}
+{% endblock %}
 
-{% if not result_obj or ('enriched_prompt' not in result_obj and 'image' not in result_obj) %}
-<p class="no-result">Result not available yet. Please refresh the page.</p>
-<div class="refresh-container">
-    <button id="refresh-btn" class="refresh-btn">Refresh Status</button>
-    <span id="refresh-timer">Auto-refresh in 30 seconds</span>
-</div>
-{% endif %}
-
-<!-- Отладочная информация о result_obj -->
-{% if result_obj %}
-<details class="debug-details">
-    <summary>Debug: Result Object</summary>
-    <pre>{{ result_obj|tojson(indent=2) }}</pre>
-</details>
-{% endif %}
-
-{% include '_site_map.html' %}
-
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Toggle raw prompt content
-        const toggleBtn = document.querySelector('.toggle-raw-btn');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function () {
-                const rawContent = document.querySelector('.raw-content');
-                if (rawContent.style.display === 'none') {
-                    rawContent.style.display = 'block';
-                    this.textContent = 'Hide Raw Text';
-                } else {
-                    rawContent.style.display = 'none';
-                    this.textContent = 'Show Raw Text';
-                }
-            });
-        }
+        // const toggleBtn = document.querySelector('.toggle-raw-btn');
+        // if (toggleBtn) {
+        //     toggleBtn.addEventListener('click', function () {
+        //         const rawWrapper = document.querySelector('.raw-content-wrapper');
+        //         const isHidden = rawWrapper.style.display === 'none';
+
+        //         rawWrapper.style.display = isHidden ? 'block' : 'none';
+        //         this.innerHTML = isHidden
+        //             ? '<span class="btn-icon">📝</span> Hide Raw Text'
+        //             : '<span class="btn-icon">📝</span> Show Raw Text';
+        //     });
+        // }
 
         // Auto-refresh logic
         const refreshBtn = document.getElementById('refresh-btn');
         if (refreshBtn) {
             let countdown = 30;
             const timerElement = document.getElementById('refresh-timer');
+
             const timerInterval = setInterval(() => {
                 countdown--;
                 timerElement.textContent = `Auto-refresh in ${countdown} seconds`;
@@ -121,20 +200,26 @@
     // Функция для обработки ошибок загрузки изображения
     function handleImageError(img) {
         const container = img.parentElement;
-        const errorMsg = document.createElement('div');
-        errorMsg.innerHTML = `
-            <div class="image-error">
-                <p><strong>Image failed to load!</strong></p>
-                <p>Attempted URL: <code>${img.src}</code></p>
-                <p>Please check if the file exists and the path is correct.</p>
-            </div>
-        `;
-        errorMsg.className = 'error-message';
-        container.replaceChild(errorMsg, img);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'image-error-display';
+        errorDiv.innerHTML = `
+        <div class="alert alert-error">
+            <strong>Image failed to load!</strong><br>
+            <small>URL: <code>${img.src}</code></small><br>
+            <small>Please check if the file exists and the path is correct.</small>
+        </div>
+    `;
+        container.replaceChild(errorDiv, img);
     }
 
     // Функция для проверки доступности изображения
     function checkImageExists(imageUrl) {
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<span class="btn-icon">⏳</span> Checking...';
+        btn.disabled = true;
+
         fetch(imageUrl, { method: 'HEAD' })
             .then(response => {
                 const status = response.ok ? 'Available ✅' : `Not found (${response.status}) ❌`;
@@ -142,153 +227,345 @@
             })
             .catch(error => {
                 alert(`Error checking image: ${error.message}\nURL: ${imageUrl}`);
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             });
+    }
+
+    // Функция для копирования URL изображения
+    function copyImageUrl(imageUrl) {
+        const fullUrl = window.location.origin + imageUrl;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="btn-icon">✅</span> Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy URL to clipboard');
+        });
+    }
+
+    // Функция для копирования текста промпта
+    function copyPromptText() {
+        const promptContent = document.querySelector('.prompt-content');
+        if (promptContent) {
+            navigator.clipboard.writeText(promptContent.textContent).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="btn-icon">✅</span> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy prompt to clipboard');
+            });
+        }
     }
 </script>
 
 <style>
-    .task-info {
-        margin-bottom: 20px;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
+    /* === СПЕЦИФИЧНЫЕ СТИЛИ ДЛЯ СТРАНИЦЫ STATUS === */
+
+    /* Карточка со статусом задачи */
+    .task-status-card {
+        margin-bottom: 2rem;
+    }
+
+    .task-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: var(--font-size-base);
+        color: var(--text-secondary);
+    }
+
+    /* Бейджи статуса */
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-large);
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-completed {
+        background-color: rgba(104, 159, 56, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(104, 159, 56, 0.3);
+    }
+
+    .status-processing {
+        background-color: rgba(245, 124, 0, 0.1);
+        color: var(--warning-color);
+        border: 1px solid rgba(245, 124, 0, 0.3);
+    }
+
+    .status-failed {
+        background-color: rgba(211, 47, 47, 0.1);
+        color: var(--error-color);
+        border: 1px solid rgba(211, 47, 47, 0.3);
+    }
+
+    .status-pending {
+        background-color: rgba(33, 150, 243, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+    }
+
+    /* Карточка с результатами */
+    .result-card {
+        margin-bottom: 2rem;
+    }
+
+    /* Отображение изображения */
+    .image-display {
+        text-align: center;
     }
 
     .image-container {
-        margin: 15px 0;
-        text-align: center;
+        margin-bottom: 2rem;
+        display: inline-block;
+        border-radius: var(--border-radius-large);
+        overflow: hidden;
+        box-shadow: var(--shadow-hover);
+        background-color: var(--background-secondary);
+        padding: 1rem;
     }
 
     .generated-image {
         max-width: 100%;
         max-height: 600px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: auto;
+        border-radius: var(--border-radius);
+        transition: transform 0.3s ease;
     }
 
+    .generated-image:hover {
+        transform: scale(1.02);
+    }
+
+    .image-error-display {
+        padding: 2rem;
+        text-align: left;
+    }
+
+    /* Действия с изображением */
     .image-actions {
-        margin-top: 15px;
         display: flex;
-        gap: 10px;
+        gap: 1rem;
         justify-content: center;
         flex-wrap: wrap;
     }
 
-    .download-btn,
-    .check-btn {
-        display: inline-block;
-        padding: 8px 15px;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .download-btn {
-        background-color: #007bff;
-    }
-
-    .download-btn:hover {
-        background-color: #0056b3;
-    }
-
-    .check-btn {
-        background-color: #17a2b8;
-    }
-
-    .check-btn:hover {
-        background-color: #138496;
-    }
-
-    .debug-info {
-        font-family: monospace;
-        border-left: 3px solid #007bff;
-    }
-
-    .debug-details {
-        margin: 20px 0;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-
-    .debug-details pre {
-        background-color: #e9ecef;
-        padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
-    }
-
-    .image-error {
-        padding: 20px;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        border-radius: 5px;
-        color: #721c24;
+    /* Отображение промпта */
+    .prompt-display {
         text-align: left;
     }
 
-    .error-message {
-        margin: 15px 0;
+    .prompt-content-wrapper {
+        margin-top: 1rem;
     }
 
-    .markdown-content {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-bottom: 15px;
+    .prompt-content {
+        background-color: var(--background-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: var(--font-size-sm);
+        line-height: 1.6;
+        max-height: 400px;
+        overflow-y: auto;
     }
 
-    .prompt-raw {
-        margin-top: 15px;
+    .prompt-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
     }
 
-    .toggle-raw-btn {
-        padding: 5px 10px;
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+    .raw-content-wrapper {
+        margin-top: 1rem;
     }
 
     .raw-content {
-        padding: 10px;
-        background-color: #e9ecef;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-top: 10px;
+        background-color: var(--background-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
         white-space: pre-wrap;
-        word-break: break-all;
+        word-break: break-word;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: var(--font-size-sm);
+        line-height: 1.6;
+        max-height: 400px;
+        overflow-y: auto;
     }
 
-    .no-result {
-        color: #6c757d;
-        font-style: italic;
-        margin: 20px 0;
+    /* Карточка ожидания */
+    .waiting-card {
+        text-align: center;
+        padding: 3rem 2rem;
     }
 
-    .refresh-container {
-        margin: 15px 0;
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top: 4px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 2rem;
     }
 
-    .refresh-btn {
-        padding: 8px 15px;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .refresh-controls {
+        margin-top: 2rem;
+    }
+
+    .refresh-timer {
+        margin-top: 1rem;
+        color: var(--text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    /* Отладочные секции */
+    .debug-section {
+        margin: 2rem 0;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: var(--background-secondary);
+    }
+
+    .debug-toggle {
+        padding: 1rem 1.5rem;
         cursor: pointer;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-light);
+        transition: all 0.3s ease;
     }
 
-    .error {
-        color: #dc3545;
-        font-weight: bold;
+    .debug-toggle:hover {
+        background-color: var(--accent-light);
+        color: var(--primary-color);
+    }
+
+    .debug-content {
+        padding: 1.5rem;
+    }
+
+    .debug-item {
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+    }
+
+    .debug-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .debug-json {
+        background-color: var(--background-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-small);
+        padding: 1rem;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: var(--font-size-sm);
+        white-space: pre-wrap;
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* Секция навигации */
+    .navigation-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    /* Иконки в кнопках */
+    .btn-icon {
+        margin-right: 0.5rem;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .task-info-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .image-container {
+            padding: 0.5rem;
+        }
+
+        .image-actions,
+        .prompt-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-actions .btn,
+        .prompt-actions .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .prompt-content {
+            padding: 1.5rem;
+        }
+
+        .waiting-card {
+            padding: 2rem 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .info-item {
+            text-align: center;
+        }
+
+        .debug-content {
+            padding: 1rem;
+        }
     }
 </style>
 {% endblock %}

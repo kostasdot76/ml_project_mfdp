@@ -1,26 +1,299 @@
 {% extends "base.html" %}
 
-{% block title %}Prediction History{% endblock %}
+{% block title %}История прогнозов{% endblock %}
 
 {% block content %}
-<h1>История прогнозов 📜</h1>
+<div class="container">
+    <h1>История прогнозов 📜</h1>
 
-{% if predictions %}
-<ul>
-    {% for prediction in predictions %}
-    <li>
-        <a href="/predict/status/{{ prediction.id }}">Task #{{ prediction.id }}</a>
-        - {{ prediction.model_type }}
-        - {{ prediction.result }}
-        - {{ prediction.cost }}
-        - {{ prediction.status }}
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>No predictions found</p>
-{% endif %}
+    {% if predictions %}
+    <div class="predictions-grid">
+        {% for prediction in predictions %}
+        <div class="card prediction-card">
+            <div class="card-header">
+                <div class="d-flex justify-space-between align-center">
+                    <h3 class="mb-0">Task #{{ prediction.id }}</h3>
+                    <span class="status-badge status-{{ prediction.status.lower() }}">
+                        {{ prediction.status }}
+                    </span>
+                </div>
+            </div>
 
-<hr>
+            <div class="card-body">
+                <div class="prediction-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Модель:</span>
+                        <span class="detail-value">{{ prediction.model_type }}</span>
+                    </div>
 
+                    <div class="detail-row">
+                        <span class="detail-label">Стоимость:</span>
+                        <span class="detail-value cost-value">{{ prediction.cost }}</span>
+                    </div>
+
+                    {% if prediction.result %}
+                    <div class="detail-row">
+                        <span class="detail-label">Результат:</span>
+                        <div class="result-content">
+                            {{ prediction.result }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="prediction-actions mt-3">
+                    <a href="/predict/status/{{ prediction.id }}" class="btn btn-primary btn-sm">
+                        Подробнее
+                    </a>
+                    {% if prediction.status.lower() == 'completed' and prediction.result %}
+                    <button class="btn btn-outline btn-sm copy-btn" data-copy="{{ prediction.result }}">
+                        Копировать результат
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-center mt-4">
+        <p class="text-muted">Всего прогнозов: {{ predictions|length }}</p>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-content">
+            <div class="empty-state-icon">🔍</div>
+            <h2>История пуста</h2>
+            <p class="text-muted">
+                У вас пока нет созданных прогнозов.
+                Создайте первый прогноз, чтобы увидеть его здесь.
+            </p>
+            <a href="/predict" class="btn btn-primary">
+                Создать прогноз
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Дополнительные стили для страницы истории */
+    .predictions-grid {
+        display: grid;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .prediction-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .prediction-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-small);
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-completed {
+        background-color: rgba(104, 159, 56, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(104, 159, 56, 0.3);
+    }
+
+    .status-pending {
+        background-color: rgba(245, 124, 0, 0.1);
+        color: var(--warning-color);
+        border: 1px solid rgba(245, 124, 0, 0.3);
+    }
+
+    .status-failed {
+        background-color: rgba(211, 47, 47, 0.1);
+        color: var(--error-color);
+        border: 1px solid rgba(211, 47, 47, 0.3);
+    }
+
+    .status-processing {
+        background-color: rgba(33, 150, 243, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+    }
+
+    .prediction-details {
+        margin-bottom: 1rem;
+    }
+
+    .detail-row {
+        display: flex;
+        margin-bottom: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: var(--text-primary);
+        min-width: 80px;
+        margin-right: 1rem;
+    }
+
+    .detail-value {
+        color: var(--text-secondary);
+        flex: 1;
+    }
+
+    .cost-value {
+        font-weight: 500;
+        color: var(--primary-color);
+    }
+
+    .result-content {
+        background-color: var(--background-secondary);
+        padding: 0.75rem;
+        border-radius: var(--border-radius-small);
+        border-left: 3px solid var(--primary-color);
+        font-size: var(--font-size-sm);
+        line-height: 1.5;
+        max-height: 120px;
+        overflow: auto;
+        color: var(--text-secondary);
+    }
+
+    .prediction-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: var(--font-size-sm);
+    }
+
+    .copy-btn {
+        position: relative;
+    }
+
+    .copy-btn.copied::after {
+        content: "Скопировано!";
+        position: absolute;
+        top: -2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text-primary);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-small);
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+    .empty-state {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        text-align: center;
+    }
+
+    .empty-state-content {
+        max-width: 400px;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h2 {
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .justify-space-between {
+        justify-content: space-between;
+    }
+
+    /* Адаптивность */
+    @media (min-width: 768px) {
+        .predictions-grid {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+    }
+
+    @media (max-width: 767px) {
+        .detail-row {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            min-width: auto;
+            margin-right: 0;
+            font-size: var(--font-size-sm);
+        }
+
+        .predictions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .prediction-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Функционал копирования результата
+    document.addEventListener('DOMContentLoaded', function () {
+        const copyButtons = document.querySelectorAll('.copy-btn');
+
+        copyButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const textToCopy = this.dataset.copy;
+
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showCopySuccess(this);
+                    }).catch(() => {
+                        fallbackCopy(textToCopy, this);
+                    });
+                } else {
+                    fallbackCopy(textToCopy, this);
+                }
+            });
+        });
+
+        function showCopySuccess(button) {
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.classList.remove('copied');
+            }, 2000);
+        }
+
+        function fallbackCopy(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showCopySuccess(button);
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+
+            document.body.removeChild(textArea);
+        }
+    });
+</script>
 {% endblock %}

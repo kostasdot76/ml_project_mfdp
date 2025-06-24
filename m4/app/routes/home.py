@@ -32,9 +32,9 @@ logging = get_logger(logger_name=__name__)
 
 settings = get_settings()
 home_route = APIRouter()
-# home_route.mount("/static", StaticFiles(directory="static"), name="static")
+home_route.mount("/static", StaticFiles(directory="static"), name="static")
 auth_route = APIRouter(prefix="/auth", tags=["Auth"])
-# auth_route.mount("/static", StaticFiles(directory="static"), name="static")
+auth_route.mount("/static", StaticFiles(directory="static"), name="static")
 
 hash_password = HashPassword()
 templates = Jinja2Templates(directory="view")

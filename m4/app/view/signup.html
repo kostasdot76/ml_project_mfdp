@@ -1,29 +1,202 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/main.css">
+<title>Регистрация - AI Image Generator</title>
+{% endblock %}
 
 {% block content %}
-<h1>Sign Up 🆕</h1>
+<div class="content-wrapper">
+    <div class="main-content">
+        <div class="form-container">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="text-center mb-2">📝 Создание аккаунта</h1>
+                    <p class="text-center text-muted mb-0">Присоединяйтесь к сообществу дизайнеров</p>
+                </div>
 
-{% if msg %}
-<p style="color: green">{{ msg }}</p>
-{% endif %}
+                <div class="card-body">
+                    <!-- Сообщение об успехе -->
+                    {% if msg %}
+                    <div class="alert alert-success">
+                        <strong>Успешно!</strong> {{ msg }}
+                    </div>
+                    {% endif %}
 
-{% for error in errors %}
-<p style="color: red">{{ error }}</p>
-{% endfor %}
+                    <!-- Вывод ошибок -->
+                    {% if errors %}
+                    <div class="alert alert-error">
+                        <strong>Ошибка регистрации:</strong>
+                        {% for error in errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
 
-<form action="/auth/signup" method="post">
-    <p>
-        <label>Email</label>
-        <input type="email" name="email" required>
-    </p>
-    <p>
-        <label>Password</label>
-        <input type="password" name="password" required>
-    </p>
-    <input type="submit" value="Create Account">
-</form>
+                    <form action="/auth/signup" method="post" class="signup-form">
+                        <div class="form-group">
+                            <label for="email">
+                                📧 Email адрес
+                            </label>
+                            <input type="email" id="email" name="email" required placeholder="designer@company.com"
+                                autocomplete="email">
+                            <small class="form-text">Мы не передаем ваш email третьим лицам</small>
+                        </div>
 
-<hr>
+                        <div class="form-group">
+                            <label for="password">
+                                🔒 Пароль
+                            </label>
+                            <input type="password" id="password" name="password" required
+                                placeholder="Создайте надежный пароль" autocomplete="new-password" minlength="6">
+                            <small class="form-text">Минимум 6 символов для безопасности</small>
+                        </div>
+
+                        <div class="signup-benefits">
+                            <h3>✨ Что вас ждет:</h3>
+                            <ul class="benefits-list">
+                                <li>🎨 Генерация изображений по описанию</li>
+                                <li>🚀 Автоматическое улучшение промптов</li>
+                                <li>📜 Сохранение истории проектов</li>
+                                <li>💰 Гибкая система оплаты</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-full-width">
+                                🚀 Создать аккаунт
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="form-footer">
+                        <div class="divider">
+                            <span>или</span>
+                        </div>
+
+                        <p class="text-center text-muted">
+                            Уже есть аккаунт?
+                            <a href="/auth/login" class="text-link">Войти в систему</a>
+                        </p>
+
+                        <p class="text-center">
+                            <a href="/" class="text-link">← Вернуться на главную</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .signup-form {
+        margin-bottom: 2rem;
+    }
+
+    .btn-full-width {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: var(--font-size-base);
+        font-weight: 600;
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .signup-benefits {
+        background-color: var(--background-secondary);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .signup-benefits h3 {
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        font-size: var(--font-size-lg);
+    }
+
+    .benefits-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .benefits-list li {
+        padding: 0.5rem 0;
+        color: var(--text-secondary);
+        font-size: var(--font-size-base);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .benefits-list li:last-child {
+        border-bottom: none;
+    }
+
+    .form-footer {
+        border-top: 1px solid var(--border-light);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .divider {
+        text-align: center;
+        margin: 1rem 0;
+        position: relative;
+    }
+
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: var(--border-color);
+    }
+
+    .divider span {
+        background-color: var(--background-white);
+        padding: 0 1rem;
+        color: var(--text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    /* Улучшение интерактивности */
+    .signup-form input:focus {
+        transform: translateY(-1px);
+    }
+
+    .signup-form .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .benefits-list li:hover {
+        color: var(--primary-color);
+        padding-left: 0.5rem;
+    }
+
+    /* Анимации */
+    .signup-form input,
+    .signup-form .btn,
+    .benefits-list li {
+        transition: all 0.3s ease;
+    }
+
+    /* Валидация */
+    .signup-form input:valid {
+        border-color: var(--success-color);
+    }
+
+    .signup-form input:invalid:not(:focus):not(:placeholder-shown) {
+        border-color: var(--error-color);
+    }
+</style>
 {% endblock %}

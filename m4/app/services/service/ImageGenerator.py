@@ -57,7 +57,9 @@ class StabilityAPIGenerator:
 class HuggingFaceGenerator:
     """Генератор изображений через Hugging Face Inference API"""
 
-    BASE_URL = "https://api-inference.huggingface.co/models"
+    # BASE_URL = "https://api-inference.huggingface.co/models"
+    #    BASE_URL = "https://i9ro93aq6fgy2ky5.us-east4.gcp.endpoints.huggingface.cloud"
+    BASE_URL = "https://yiv5esf4w1rip9gn.us-east-1.aws.endpoints.huggingface.cloud"  # stable-diffusion-xl-base-1-0-zbl
 
     def __init__(
         self,
@@ -66,7 +68,11 @@ class HuggingFaceGenerator:
     ):
         self.api_token = api_token or os.getenv("HF_API_TOKEN")
         self.model_id = model_id or self.FREE_MODELS[0]
-        self.headers = {"Authorization": f"Bearer {self.api_token}"}
+        self.headers = {
+            "Accept": "image/png",
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json",
+        }
 
     def generate(
         self,
@@ -99,9 +105,7 @@ class HuggingFaceGenerator:
             payload["parameters"]["seed"] = seed
 
         # Отправка запроса
-        response = requests.post(
-            f"{self.BASE_URL}/{self.model_id}", headers=self.headers, json=payload
-        )
+        response = requests.post(f"{self.BASE_URL}", headers=self.headers, json=payload)
 
         # Обработка ответа
         if response.status_code == 200:
